@@ -33,9 +33,12 @@ ParseOpCode = -> (op_int) {
 
 class IntCodeArray
 
+  attr_reader :outputs
+  attr_reader :codes
+
   def initialize codes, inputs
     @codes = codes
-    @init_inputs = []
+    @init_inputs = inputs
     @inputs = []
     @outputs = []
   end
@@ -79,13 +82,22 @@ class IntCodeArray
     end
   end
 
+  def [] (index, mode=POSITION)
+    x = case mode
+    when POSITION, nil
+      @codes[index]
+    when IMMEDIATE
+      index
+    end
+    x
+  end
+
   def arithmetic_op(op_int, (mode_x, mode_y), (x, y, out))
     mode_x ||= POSITION
     mode_y ||= POSITION
 
     xx = self[x, mode_x]
     yy = self[y, mode_y]
-    Log.call ["a2", xx, yy]
     @codes[out] = xx.send(
       case op_int
       when ADD
@@ -103,7 +115,6 @@ class IntCodeArray
     when INPUT
       @codes[arg] = @inputs.shift
     when OUTPUT
-      puts "Output OP:#{self[arg, mode]}"
       @outputs << self[arg, mode]
     end
   end
@@ -142,18 +153,4 @@ class IntCodeArray
     ) ? BOOL_TRUE : BOOL_FALSE
   end
 
-  def [] (index, mode=POSITION)
-    x = case mode
-    when POSITION, nil
-      @codes[index]
-    when IMMEDIATE
-      index
-    end
-    Log.call ["[]", index, mode, x]
-    x
-  end
-
 end
-c = File.read("in.txt").split(",").map(&:to_i)
-p = IntCodeArray.new(c)
-puts p.call
