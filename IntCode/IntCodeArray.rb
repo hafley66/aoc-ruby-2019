@@ -1,3 +1,5 @@
+
+
 class IntCodeArray
   ParseOpCode = -> (op_int) {
     s = op_int.to_s
@@ -47,9 +49,10 @@ class IntCodeArray
     @on_terminate = on_terminate
   end
 
-  def call
-    @index = 0
-    while !(run_op_code().nil?);;end
+  def call(index = nil, &block)
+    @index = index || @index
+    while !(run_op_code(&block).nil?)
+    end
     return self
   end
 
@@ -65,30 +68,53 @@ class IntCodeArray
   def run_op_code
     op_i, modes = ParseOpCode.call @codes[@index]
     args = @codes[@index+1..]
+    i = @index
+
+    yield(
+      is_before_op: true,
+      is_after_op: false,
+      op_i: op_i,
+      modes: modes,
+      args: args,
+      index: @index,
+      next_index: nil
+    ) if block_given?
+
     @index = (
       case op_i
         when ADD, MULTIPLY
           (arithmetic_op op_i, modes, args)
-          @index + ARITHMETIC_ARG_COUNT
+          i + ARITHMETIC_ARG_COUNT
         when LESS_THAN, EQUALS
           (bool_op op_i, modes, args)
-          @index + BOOLEAN_ARG_COUNT
+          i + BOOLEAN_ARG_COUNT
         when INPUT, OUTPUT
           (io_op op_i, modes, args)
-          @index + IO_ARG_COUNT
+          i + IO_ARG_COUNT
         when JUMP_IF_FALSE, JUMP_IF_TRUE
-          (jump_op op_i, modes, args) || (@index + JUMP_ARG_COUNT)
+          (jump_op op_i, modes, args) || (i + JUMP_ARG_COUNT)
         when TERMINATE
           (_get_proc :on_terminate).call(self)
           TERMINATE_INDEX
         else
-          raise StandardError.new("Unexpected input!#{index} #{@codes[index]}")
+          raise StandardError.new("Unexpected input!#{i} #{@codes[i]}")
       end
     )
 
-    if @next_index && (@next_index) >= @codes.length
+    if @index && (@index >= @codes.length)
       raise StandardError.new("Unexpected out of bounds!#{@index} #{@codes[@index]}")
     end
+
+    yield(
+      is_before_op: false,
+      is_after_op: true,
+      op_i: op_i,
+      modes: modes,
+      args: args,
+      index: i,
+      next_index: @index
+    ) if block_given?
+
     @index
   end
 
@@ -163,6 +189,10 @@ class IntCodeArray
     ) ? BOOL_TRUE : BOOL_FALSE
   end
 
+  def terminated?
+    @index = nil
+  end
+
   class ArrayIORunner
     def initialize(codes = [], inputs: [])
       @init_inputs = inputs
@@ -172,13 +202,15 @@ class IntCodeArray
         codes,
         on_input: (method :on_input),
         on_output: (method :on_output),
-        on_terminate: (method :on_terminate),
+        on_terminate: (method :on_terminate)
       )
     end
 
-    attr_reader :outputs, :inputs
+    attr_reader :outputs, :inputs, :int_coder
 
-    def codes; @int_coder.codes; end
+    def codes
+      @int_coder.codes
+    end
 
     def call
       @inputs = @init_inputs.clone
@@ -200,4 +232,75 @@ class IntCodeArray
     end
   end
 
+end
+
+
+
+class LinkedList
+  attr_reader :head
+
+  def initialize(circular: false)
+    @circular = circular
+    @head = nil
+    @tail = nil
+  end
+
+  def append(value)
+    if @head
+      tail = Node.new(value)
+      @tail.next = tail
+      if @circular
+        tail.next = @head
+        @tail = @tail
+      end
+    else
+      @head = Node.new(value)
+      @tail = @head
+    end
+  end
+
+  def find(&block)
+    return @head if @head == @tail
+    node = @head
+    clamp = false
+    while (node = node.next && !(node == @head && clamp))
+      clamp = true
+      if block && block.call(node)
+        return node
+      end
+    end
+  end
+
+  def print
+    node = @head
+    puts node
+    while (node = node.next)
+      puts node
+    end
+  end
+
+  class << self
+    def from_array array, **args
+      ll = LinkedList.new(**args)
+      puts "wtf"
+      puts ll.to_s
+      array.each do |it|
+        puts "ay lmao"
+        ll.append it
+      end
+      ll
+    end
+  end
+end
+
+class Node
+  attr_accessor :next
+  attr_reader   :value
+  def initialize(value)
+    @value = value
+    @next  = nil
+  end
+  def to_s
+    "Node with value: #{@value}"
+  end
 end
