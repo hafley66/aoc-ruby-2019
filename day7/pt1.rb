@@ -17,17 +17,18 @@ FindMaxSignal = -> (int_codes, permutation_set) {
 
 class PausableArrayRunner < ::IntCodeArray::ArrayIORunner
 
+  attr_reader :name
+
   def initialize(*args, **kwargs)
     super(*args, **kwargs)
     @inputs = kwargs[:inputs]
+    @name = kwargs[:name]
   end
 
   def call(inputs=[])
     @inputs += inputs
     @int_coder.call(
       &proc do |is_after_op:, op_i:, next_index:, **k|
-        puts @inputs.to_s
-        puts "is after op? #{is_after_op} #{op_i}"
         if is_after_op
           case op_i
             when ::IntCodeArray::OUTPUT, ::IntCodeArray::TERMINATE
@@ -39,18 +40,14 @@ class PausableArrayRunner < ::IntCodeArray::ArrayIORunner
   end
 end
 
-
 class FindMaxFeedbackSignal
   Amps = [:A, :B, :C, :D, :E]
 
   def call(int_codes, permutation_set)
-
     permutation_set.map do |combos|
-      amp_machines = combos.map do |phase_setting|
-        PausableArrayRunner.new(int_codes, inputs: [phase_setting])
+      amp_machines = combos.map.with_index do |phase_setting, index|
+        PausableArrayRunner.new(int_codes.clone, inputs: [phase_setting], name: Amps[index])
       end
-
-      puts amp_machines.length
 
       amps_ll = LinkedList.from_array(amp_machines, circular: true)
       queue = [amps_ll.head]
@@ -58,7 +55,17 @@ class FindMaxFeedbackSignal
       [
         combos,
         queue.reduce(0, &proc { |signal, amp_node|
-          output = amp_node.value.call([signal])
+          amp = amp_node.value
+          mac = amp.int_coder
+          puts "RAGE BEFORE: #{amps_ll.iterate_values.map{|it|
+            it.int_coder.index
+          }}"
+          output = amp.call([signal])
+
+          puts "RAGE AFTER: #{amps_ll.iterate_values.map{|it|
+            it.int_coder.index
+          }}"
+
           node = amp_node.next
           while (node.value.int_coder.terminated?) && (node != amp_node)
             node = node.next
@@ -66,7 +73,6 @@ class FindMaxFeedbackSignal
           if node != amp_node
             queue.push(node)
           end
-          puts "New amp is...#{amp_node}"
           amp_node.value.outputs.last
         })
       ]

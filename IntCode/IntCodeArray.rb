@@ -39,18 +39,22 @@ class IntCodeArray
     puts x.to_s if x
   }
 
-  attr_reader :codes
+  attr_reader :codes, :index
 
   def initialize(codes = [], on_input: Log, on_output: Log, on_terminate: Log)
-    @index = 0
+    self.index = 0
     @codes = codes
     @on_input = on_input
     @on_output = on_output
     @on_terminate = on_terminate
   end
 
-  def call(index = nil, &block)
-    @index = index || @index
+  def index= val
+    puts "cyring in my sleep #{val}"
+    @index = val
+  end
+
+  def call(&block)
     while !(run_op_code(&block).nil?)
     end
     return self
@@ -66,9 +70,9 @@ class IntCodeArray
   end
 
   def run_op_code
-    op_i, modes = ParseOpCode.call @codes[@index]
-    args = @codes[@index+1..]
-    i = @index
+    op_i, modes = ParseOpCode.call @codes[index]
+    args = @codes[index+1..]
+    i = index
 
     yield(
       is_before_op: true,
@@ -76,11 +80,11 @@ class IntCodeArray
       op_i: op_i,
       modes: modes,
       args: args,
-      index: @index,
+      index: index,
       next_index: nil
     ) if block_given?
 
-    @index = (
+    self.index = (
       case op_i
         when ADD, MULTIPLY
           (arithmetic_op op_i, modes, args)
@@ -101,7 +105,7 @@ class IntCodeArray
       end
     )
 
-    if @index && (@index >= @codes.length)
+    if index && (index >= @codes.length)
       raise StandardError.new("Unexpected out of bounds!#{@index} #{@codes[@index]}")
     end
 
@@ -112,10 +116,10 @@ class IntCodeArray
       modes: modes,
       args: args,
       index: i,
-      next_index: @index
+      next_index: index
     ) if block_given?
 
-    @index
+    index
   end
 
   def [] (index, mode=POSITION)
@@ -190,16 +194,16 @@ class IntCodeArray
   end
 
   def terminated?
-    @index = nil
+    index == nil
   end
 
   class ArrayIORunner
-    def initialize(codes = [], inputs: [])
+    def initialize(codes = [], inputs: [], **kwargs)
       @init_inputs = inputs
       @inputs = []
       @outputs = []
       @int_coder = ::IntCodeArray.new(
-        codes,
+        codes.clone,
         on_input: (method :on_input),
         on_output: (method :on_output),
         on_terminate: (method :on_terminate)
@@ -251,7 +255,7 @@ class LinkedList
       @tail.next = tail
       if @circular
         tail.next = @head
-        @tail = @tail
+        @tail = tail
       end
     else
       @head = Node.new(value)
@@ -259,33 +263,42 @@ class LinkedList
     end
   end
 
-  def find(&block)
-    return @head if @head == @tail
+  def iterate
+    if !@head
+      return []
+    end
+    tmp = []
+
     node = @head
     clamp = false
-    while (node = node.next && !(node == @head && clamp))
+    while (node && !(node == @head && clamp))
       clamp = true
-      if block && block.call(node)
-        return node
-      end
+      tmp << node
+      node = node.next
     end
+    tmp
+  end
+
+  def iterate_values
+    iterate.map{|it| it.value}
+  end
+
+  def find(&block)
+    iterate.find(&block)
   end
 
   def print
-    node = @head
-    puts node
-    while (node = node.next)
-      puts node
-    end
+    iterate.each {|it| puts it.to_s}
+  end
+
+  def print_values
+    iterate_values { |i| puts i }
   end
 
   class << self
     def from_array array, **args
       ll = LinkedList.new(**args)
-      puts "wtf"
-      puts ll.to_s
       array.each do |it|
-        puts "ay lmao"
         ll.append it
       end
       ll
