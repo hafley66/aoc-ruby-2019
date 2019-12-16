@@ -49,7 +49,7 @@ class IntCodeArray
 
   def call
     @index = 0
-    while(!run_op_code().nil?);;end
+    while !(run_op_code().nil?);;end
     return self
   end
 
@@ -163,41 +163,41 @@ class IntCodeArray
     ) ? BOOL_TRUE : BOOL_FALSE
   end
 
-end
+  class ArrayIORunner
+    def initialize(codes = [], inputs: [])
+      @init_inputs = inputs
+      @inputs = []
+      @outputs = []
+      @int_coder = ::IntCodeArray.new(
+        codes,
+        on_input: (method :on_input),
+        on_output: (method :on_output),
+        on_terminate: (method :on_terminate),
+      )
+    end
 
+    attr_reader :outputs, :inputs
 
-class ArrayIORunner
-  def initialize(codes = [], inputs: [])
-    @init_inputs = inputs
-    @inputs = []
-    @outputs = []
-    @int_coder = ::IntCodeArray.new(
-      codes,
-      on_input: (method :on_input),
-      on_output: (method :on_output),
-      on_terminate: (method :on_terminate),
-    )
+    def codes; @int_coder.codes; end
+
+    def call
+      @inputs = @init_inputs.clone
+      @outputs = []
+      @int_coder.call
+      @outputs
+    end
+
+    def on_input _
+      # Hah, this slices, assigns as side effect, hilarious
+      (next_input, *@inputs = @inputs)[0]
+    end
+
+    def on_output int_code_array, output
+      @outputs << output
+    end
+
+    def on_terminate _
+    end
   end
 
-  attr_reader :outputs, :inputs
-
-  def codes; @int_coder.codes; end
-
-  def call
-    @inputs = @init_inputs.clone
-    @outputs = []
-    @int_coder.call
-  end
-
-  def on_input _
-    # Hah, this slices, assigns as side effect, hilarious
-    (next_input, *@inputs = @inputs)[0]
-  end
-
-  def on_output int_code_array, output
-    @outputs << output
-  end
-
-  def on_terminate _
-  end
 end

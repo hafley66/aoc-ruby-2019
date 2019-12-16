@@ -7,7 +7,10 @@ RSpec.describe "day7" do
   Permutations = (0..4).to_a
   it "finds max signal and tuple that found it from examples" do
     expect(
-      FindMaxSignal.call([3,15,3,16,1002,16,10,16,1,16,15,15,4,15,99,0,0], Permutations)
+      FindMaxSignal.call(
+        [3,15,3,16,1002,16,10,16,1,16,15,15,4,15,99,0,0],
+        Permutations
+      )
     ).to eq([
       [4,3,2,1,0],
       43210
@@ -16,7 +19,10 @@ RSpec.describe "day7" do
 
   it "finds max amplifier signal tuple from main problem" do
     expect(
-      FindMaxSignal.call(IntCodes, Permutations)
+      FindMaxSignal.call(
+        IntCodes,
+        Permutations
+      )
     ).to eq([
       [2, 0, 1, 4, 3],
       19650

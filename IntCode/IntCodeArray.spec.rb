@@ -2,7 +2,7 @@ require_relative("./IntCodeArray.rb")
 require_relative("../file_help.rb")
 
 FromFile = ->(file_name, inputs=[]) {
-  ArrayIORunner.new(
+  ::IntCodeArray::ArrayIORunner.new(
     (ReadCommaInt.call file_name),
     inputs: inputs
   )
