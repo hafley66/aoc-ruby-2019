@@ -1,3 +1,5 @@
+require_relative("../file_help.rb")
+
 def op_code (array, index)
   op, a, b, c = array[index...index+4]
   code, push = case op
@@ -46,13 +48,13 @@ end
 
 puts (
   main(
-    File.read("2-o.txt").split(",").map(&:to_i),
+    ReadCommaInt.call("day2.txt"),
     19690720
   ).to_s
 )
 
 puts(
   run_ops(
-    File.read("2-o.txt").split(",").map(&:to_i),
+    ReadCommaInt.call("day2.txt"),
   )
 )

@@ -1,2 +1,2 @@
 --color
---pattern **/*.spec.rb
+--pattern './**/*.spec.rb'
