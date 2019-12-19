@@ -5,34 +5,33 @@ IntCodes = ReadCommaInt.call "day7.txt"
 
 RSpec.describe "day7" do
   Permutations = (0..4).to_a
-  # it "finds max signal and tuple that found it from examples" do
-  #   expect(
-  #     FindMaxSignal.call(
-  #       [3,15,3,16,1002,16,10,16,1,16,15,15,4,15,99,0,0],
-  #       Permutations
-  #     )
-  #   ).to eq([
-  #     [4,3,2,1,0],
-  #     43210
-  #   ])
-  # end
+  it "finds max signal and tuple that found it from examples" do
+    expect(
+      FindMaxSignal.call(
+        [3,15,3,16,1002,16,10,16,1,16,15,15,4,15,99,0,0],
+        Permutations
+      )
+    ).to eq([
+      [4,3,2,1,0],
+      43210
+    ])
+  end
 
-  # it "finds max amplifier signal tuple from main problem" do
-  #   expect(
-  #     FindMaxSignal.call(
-  #       IntCodes,
-  #       Permutations
-  #     )
-  #   ).to eq([
-  #     [2, 0, 1, 4, 3],
-  #     19650
-  #   ])
-  # end
+  it "finds max amplifier signal tuple from main problem" do
+    expect(
+      FindMaxSignal.call(
+        IntCodes,
+        Permutations
+      )
+    ).to eq([
+      [2, 0, 1, 4, 3],
+      19650
+    ])
+  end
 end
 
 RSpec.describe "day7 part 2" do
-  it "passes example programs" do
-    # p = (0..5).to_a.permutation(5).to_a
+  it "passes example program 1" do
     p = [[9, 8, 7, 6, 5], [5, 6, 7, 8, 9]]
     expect(
       (FindMaxFeedbackSignal.new).call(
@@ -45,4 +44,18 @@ RSpec.describe "day7 part 2" do
       139629729
     ])
   end
+
+  it "passes main program" do
+    p = (5..9).to_a.permutation(5).to_a
+    expect(
+      (FindMaxFeedbackSignal.new).call(
+        ReadCommaInt.call("day7.txt"),
+        p
+      )
+    ).to eq([
+      [7, 8, 6, 9, 5],
+      35961106
+    ])
+  end
+
 end

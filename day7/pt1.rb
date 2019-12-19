@@ -57,14 +57,7 @@ class FindMaxFeedbackSignal
         queue.reduce(0, &proc { |signal, amp_node|
           amp = amp_node.value
           mac = amp.int_coder
-          puts "RAGE BEFORE: #{amps_ll.iterate_values.map{|it|
-            it.int_coder.index
-          }}"
           output = amp.call([signal])
-
-          puts "RAGE AFTER: #{amps_ll.iterate_values.map{|it|
-            it.int_coder.index
-          }}"
 
           node = amp_node.next
           while (node.value.int_coder.terminated?) && (node != amp_node)

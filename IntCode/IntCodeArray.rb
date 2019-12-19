@@ -50,7 +50,6 @@ class IntCodeArray
   end
 
   def index= val
-    puts "cyring in my sleep #{val}"
     @index = val
   end
 
